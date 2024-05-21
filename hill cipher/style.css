@@ -1,0 +1,50 @@
+h1{
+    display: flex;
+    justify-content: center;
+    font-weight: bold;
+    margin-top: 2rem;
+}
+.container1{
+    display: flex;
+    justify-content: center;
+    margin-top: 4rem;
+}
+.container2{
+    display: flex;
+    justify-content: center;
+    margin-top: 4rem;
+}
+.box1{
+    display: flex;
+    flex-direction: column;
+}
+.box2{
+    display: flex;
+    flex-direction: column;
+}
+
+.btn1{
+    width: 85px;
+    height: 40px;
+    background-color: #000;
+    color: white;
+    cursor: pointer;
+    border-radius: 1rem;
+    margin-top: 2rem;
+}
+.btn2{
+    width: 85px;
+    height: 40px;
+    background-color: #000;
+    color: white;
+    border-radius: 2rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    margin-top: 1rem;
+}
+#keyDisplay{
+    margin-top: 1rem;
+}
+#inversekeyDisplay{
+    margin-top: 1rem;
+}

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hill Cipher</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div>
+        <h1>Hill Cipher Encryption</h1>
+        <div class="container1">
+            <div class="box1">
+                <label for="plainTextarea">Enter Plain Text:</label>
+                <textarea id="plainTextarea" rows="3" cols="10" ></textarea>
+                <button class="btn1" onclick="generateKeyMatrix()">generate key</button>
+                <textarea id="keyDisplay" readonly></textarea>
+            </div>         
+            <button class="btn2" onclick="hillEncrypt()">Encrypt</button>
+            <div class="box2">
+                <label for="cipherTextarea">Cipher Text:</label>
+                <textarea id="cipherTextarea" rows="3" cols="10" readonly></textarea>
+            </div>  
+        </div>
+        <h1>Hill Cipher Decryption</h1>
+        <div class="container2">
+            <div class="box1">
+                <label for="cipherText">Enter Cipher Text:</label>
+                <textarea id="cipherText" rows="3" cols="10" ></textarea>
+                <button class="btn1" onclick="generateInverseKeyMatrix(keyMatrix)">generate inverse key</button>
+                <textarea id="inversekeyDisplay" readonly></textarea>
+            </div>         
+            <button class="btn2" onclick="hillDecrypt()">Decrypt</button>
+            <div class="box2">
+                <label for="plainText">Plain Text:</label>
+                <textarea id="plainText" rows="3" cols="10" readonly></textarea>
+            </div>
+
+        </div>
+    </div>
+    <script>
+        const characters = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+        ]
+
+        let keyMatrix = null;
+        function generateKeyMatrix() {      
+            let array = []
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    let input = prompt(`Enter a value for the key element at row ${i + 1}, column ${j + 1}`);
+                    if (input === null) {
+                        console.log("User cancelled input.");
+                        return null; 
+                    }
+                    input = parseFloat(input);
+                    if (isNaN(input)) {
+                        alert("Please enter a valid number.");
+                        return null;
+                    }
+                    array.push(input);
+                }    
+            }
+            keyMatrix = [];
+            for (let i = 0; i < 3; i++) {
+                keyMatrix.push(array.slice(i * 3, i * 3 + 3));
+            }
+
+            document.getElementById("keyDisplay").value = keyMatrix.map(row => row.join(' ')).join('\n');
+            return keyMatrix;
+        }
+        function matrixMultiply(keyMatrix, chunks) {
+            console.log("keyMatrix:", keyMatrix)
+            console.log("chunks:", chunks)
+
+            const encrypted = [];
+            for (let i = 0; i < 3; i++) {
+                let sum = 0;
+                for (let j = 0; j < 3; j++) {
+                    sum += keyMatrix[i][j] * chunks[j];
+                }
+                encrypted.push(sum % 26);
+            }
+        }
+
+        function hillEncrypt() {
+            let plainText = document.getElementById("plainTextarea").value.toUpperCase().replace(/[^A-Z]/g, '');
+            
+            let cipherText = "";
+            for(let i = 0; i< plainText.length; i += 3) {
+                const chunks = plainText.slice(i, i+3).split('').map(char => characters.indexOf(char));
+                while(chunks.length < 3){
+                    chunks.push(characters.indexOf('X'));
+                }
+                const encrypted = matrixMultiply(keyMatrix, chunks);
+                cipherText += encrypted.map(num => characters[num]). join('');
+            }
+            console.log("Cipher Text:", cipherText)
+            document.getElementById("cipherTextarea").value = cipherText;
+        }
+
+        let inverseKeyMatrix = null;
+        function generateInverseKeyMatrix(keyMatrix) {
+            const det = keyMatrix[0][0] * (keyMatrix[1][1] * keyMatrix[2][2] - keyMatrix[1][2] * keyMatrix[2][1]) -
+                keyMatrix[0][1] * (keyMatrix[1][0] * keyMatrix[2][2] - keyMatrix[1][2] * keyMatrix[2][0]) +
+                keyMatrix[0][2] * (keyMatrix[1][0] * keyMatrix[2][1] - keyMatrix[1][1] * keyMatrix[2][0]);
+            const adjugate = [
+                [
+                    keyMatrix[1][1] * keyMatrix[2][2] - keyMatrix[1][2] * keyMatrix[2][1],
+                    -(keyMatrix[0][1] * keyMatrix[2][2] - keyMatrix[0][2] * keyMatrix[2][1]),
+                    keyMatrix[0][1] * keyMatrix[1][2] - keyMatrix[0][2] * keyMatrix[1][1]
+                ],
+                [
+                    -(keyMatrix[1][0] * keyMatrix[2][2] - keyMatrix[1][2] * keyMatrix[2][0]),
+                    keyMatrix[0][0] * keyMatrix[2][2] - keyMatrix[0][2] * keyMatrix[2][0],
+                    -(keyMatrix[0][0] * keyMatrix[1][2] - keyMatrix[0][2] * keyMatrix[1][0])
+                ],
+                [
+                    keyMatrix[1][0] * keyMatrix[2][1] - keyMatrix[1][1] * keyMatrix[2][0],
+                    -(keyMatrix[0][0] * keyMatrix[2][1] - keyMatrix[0][1] * keyMatrix[2][0]),
+                    keyMatrix[0][0] * keyMatrix[1][1] - keyMatrix[0][1] * keyMatrix[1][0]
+                ]
+            ];
+            const invDet = modInverse(det, 26);
+            if (invDet === null) {
+                throw new Error('Matrix is not invertible');
+            }
+            inverseKeyMatrix = adjugate.map(row => row.map(elem => mod(elem * invDet, 26)));
+            document.getElementById("inversekeyDisplay").value = inverseKeyMatrix.map(row => row.join(' ')).join('\n');
+            return inverseKeyMatrix;
+        }
+        
+        function modInverse(a, m) {
+            for (let i = 0; i < m; i++) {
+                if ((a * i) % m === 1) {
+                   return i;
+                }
+            }
+            return null; // Inverse does not exist
+        }
+        function mod(n, m) {
+            return ((n % m) + m) % m;
+        }
+
+        function hillDecrypt() {
+            let cipherText = document.getElementById("cipherText").value.toUpperCase().replace(/[^A-Z]/g, '');
+            
+            let plainText = "";
+            for(let i = 0; i< cipherText.length; i += 3) {
+                const chunks = cipherText.slice(i, i+3).split('').map(char => characters.indexOf(char));
+                while(chunks.length < 3){
+                    chunks.push(characters.indexOf('X'));
+                }
+                const decrypted = matrixMultiply(inverseKeyMatrix, chunks);
+                plainText += decrypted.map(num => characters[num]). join('');
+            }
+            console.log("plain Text:", plainText)
+            document.getElementById("plainText").value = plainText;
+
+        }
+               
+    </script>
+</body>
+</html>
